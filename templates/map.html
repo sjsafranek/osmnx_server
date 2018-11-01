@@ -1,0 +1,159 @@
+<html>
+	<head>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css" />
+		<script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script>
+
+
+		    <script src="https://leaflet.github.io/Leaflet.draw/src/Leaflet.draw.js"></script>
+		    <script src="https://leaflet.github.io/Leaflet.draw/src/Leaflet.Draw.Event.js"></script>
+		    <link rel="stylesheet" href="https://leaflet.github.io/Leaflet.draw/src/leaflet.draw.css"/>
+
+		    <script src="https://leaflet.github.io/Leaflet.draw/src/Toolbar.js"></script>
+		    <script src="https://leaflet.github.io/Leaflet.draw/src/Tooltip.js"></script>
+
+		    <script src="https://leaflet.github.io/Leaflet.draw/src/ext/GeometryUtil.js"></script>
+		    <script src="https://leaflet.github.io/Leaflet.draw/src/ext/LatLngUtil.js"></script>
+		    <script src="https://leaflet.github.io/Leaflet.draw/src/ext/LineUtil.Intersect.js"></script>
+		    <script src="https://leaflet.github.io/Leaflet.draw/src/ext/Polygon.Intersect.js"></script>
+		    <script src="https://leaflet.github.io/Leaflet.draw/src/ext/Polyline.Intersect.js"></script>
+		    <script src="https://leaflet.github.io/Leaflet.draw/src/ext/TouchEvents.js"></script>
+
+		    <script src="https://leaflet.github.io/Leaflet.draw/src/draw/DrawToolbar.js"></script>
+		    <script src="https://leaflet.github.io/Leaflet.draw/src/draw/handler/Draw.Feature.js"></script>
+		    <script src="https://leaflet.github.io/Leaflet.draw/src/draw/handler/Draw.SimpleShape.js"></script>
+		    <script src="https://leaflet.github.io/Leaflet.draw/src/draw/handler/Draw.Polyline.js"></script>
+		    <script src="https://leaflet.github.io/Leaflet.draw/src/draw/handler/Draw.Marker.js"></script>
+		    <script src="https://leaflet.github.io/Leaflet.draw/src/draw/handler/Draw.Circle.js"></script>
+		    <script src="https://leaflet.github.io/Leaflet.draw/src/draw/handler/Draw.CircleMarker.js"></script>
+		    <script src="https://leaflet.github.io/Leaflet.draw/src/draw/handler/Draw.Polygon.js"></script>
+		    <script src="https://leaflet.github.io/Leaflet.draw/src/draw/handler/Draw.Rectangle.js"></script>
+
+		    <script src="https://leaflet.github.io/Leaflet.draw/src/edit/EditToolbar.js"></script>
+		    <script src="https://leaflet.github.io/Leaflet.draw/src/edit/handler/EditToolbar.Edit.js"></script>
+		    <script src="https://leaflet.github.io/Leaflet.draw/src/edit/handler/EditToolbar.Delete.js"></script>
+
+		    <script src="https://leaflet.github.io/Leaflet.draw/src/Control.Draw.js"></script>
+
+		    <script src="https://leaflet.github.io/Leaflet.draw/src/edit/handler/Edit.Poly.js"></script>
+		    <script src="https://leaflet.github.io/Leaflet.draw/src/edit/handler/Edit.SimpleShape.js"></script>
+		    <script src="https://leaflet.github.io/Leaflet.draw/src/edit/handler/Edit.Rectangle.js"></script>
+		    <script src="https://leaflet.github.io/Leaflet.draw/src/edit/handler/Edit.Marker.js"></script>
+		    <script src="https://leaflet.github.io/Leaflet.draw/src/edit/handler/Edit.CircleMarker.js"></script>
+		    <script src="https://leaflet.github.io/Leaflet.draw/src/edit/handler/Edit.Circle.js"></script>
+
+
+		    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@latest/dist/sweetalert2.all.min.js"></script>
+
+
+		<style>
+			#map {
+				height:100%;
+				width:100%;
+			}
+		</style>
+
+	</head>
+	<body>
+		<div id="map"></div>
+	</body>
+	<script type="text/javascript">
+
+		var app;
+
+		var App = function(div_id, callback) {
+			var self = this;
+
+			this.baseLayers = {
+				"OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+					attribution: '&copy; <a href="http://osm.org/copyright" target="_blank">OpenStreetMap</a> contributors',
+					reuseTiles: true
+				})
+			}
+			this.map = L.map(div_id, {
+							maxZoom:20,
+							layers: [
+								this.baseLayers['OpenStreetMap']
+							]
+						}).setView([0, 0], 2);
+
+			this.points = [];
+
+			this.path = L.geoJSON().addTo(this.map);
+
+			this.drawnItems = new L.FeatureGroup();
+		    this.map.addLayer(this.drawnItems);
+			this.drawControl = new L.Control.Draw({
+				edit: {
+					featureGroup: this.drawnItems
+				},
+				draw: {
+					rectangle: false,
+					polygon: false,
+					circle: false,
+					polyline: false,
+					marker: true,
+					circlemarker: false
+				}
+			});
+			this.map.addControl(this.drawControl);
+
+		    this.map.on(L.Draw.Event.CREATED, function (event) {
+		        var layer = event.layer;
+				self.points.push(layer);
+		        self.drawnItems.addLayer(layer);
+				self.fetchPath();
+		    });
+
+			this.map.on(L.Draw.Event.DELETED, function (event) {
+				var layers = event.layers.getLayers();
+				self.points = self.points.filter(function(layer) {
+					return -1 == layers.indexOf(layer);
+				});
+				self.fetchPath()
+			});
+
+			this.map.on(L.Draw.Event.EDITED, function (event) {
+				self.fetchPath();
+			});
+
+			callback && callback();
+		}
+
+		App.prototype.getLocations = function() {
+			return this.points.map(function(layer){
+				var ll = layer.getLatLng();
+				return {
+					lat: ll.lat,
+					lng: ll.lng
+				}
+			});
+		}
+
+		App.prototype.fetchPath = function() {
+			var self = this;
+			this.path.clearLayers();
+			var locations = this.getLocations();
+			if (2 <= locations.length) {
+				$.post('/api/v1/route', JSON.stringify(locations))
+					.done(function(geojson) {
+					   	self.path.addData(geojson);
+					})
+					.fail(function(xhr) {
+						console.log(xhr);
+					});
+			}
+		}
+
+		App.prototype.getMap = function() {
+			return this.map;
+		}
+
+		$(document).ready(function(){
+			app = new App('map');
+		});
+
+
+	</script>
+</html>
