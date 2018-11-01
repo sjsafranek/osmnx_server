@@ -30,8 +30,11 @@ class OSMGraph(object):
             # self.Nodes = pickle.load( open( nodes_file, "rb" ) )
 
         else:
-            log.debug("Building graph from osm data")
-            self.Graph = ox.graph_from_place(self.place, network_type='drive', simplify=False)
+            Logger.debug("Building graph from osm data")
+            try:
+                self.Graph = ox.graph_from_place(self.place, network_type='drive', simplify=False)
+            except:
+                self.Graph = ox.graph_from_place(self.place, network_type='drive', simplify=False, which_result=2)
             self.Edges = ox.graph_to_gdfs(self.Graph, nodes=False, edges=True)
             # self.Nodes = ox.graph_to_gdfs(self.Graph, nodes=True, edges=false)
 
