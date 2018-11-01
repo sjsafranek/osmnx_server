@@ -5,7 +5,9 @@ import logging
 import osmnx as ox
 import networkx as nx
 from multiprocessing import Process, Queue
-import signal
+# import signal
+# import geopy.distance
+# from shapely.geometry import Point, MultiPoint
 
 from logger import Logger
 import utils
@@ -32,9 +34,9 @@ class OSMGraph(object):
         else:
             Logger.debug("Building graph from osm data")
             try:
-                self.Graph = ox.graph_from_place(self.place, network_type='drive', simplify=False)
+                self.Graph = ox.graph_from_place(self.place, network_type='drive', simplify=False, retain_all=True)
             except:
-                self.Graph = ox.graph_from_place(self.place, network_type='drive', simplify=False, which_result=2)
+                self.Graph = ox.graph_from_place(self.place, network_type='drive', simplify=False, retain_all=True, which_result=2)
             self.Edges = ox.graph_to_gdfs(self.Graph, nodes=False, edges=True)
             # self.Nodes = ox.graph_to_gdfs(self.Graph, nodes=True, edges=false)
 
@@ -106,11 +108,24 @@ class OSMGraph(object):
         nodes.to_csv('{0}.nodes'.format(self.place), index=False)
         edges.to_csv('{0}.edges'.format(self.place), index=False)
 
+    # create graph on the fly
+    def FindRoute(self, waypoints=[]):
+        multiPoint = MultiPoint([ (point['lng'], point['lat']) for point in waypoints ])
+        polygon = multiPoint.envelope
+        polygon = polygon.buffer(0.005)
+        # bounds = multiPoint.bounds
+        # distance = Point(bounds[0], bounds[0]).distance(Point(bounds[1], bounds[1]))
+        # Logger.info(distance)
+        self.Graph = ox.graph_from_polygon(polygon, network_type='drive', simplify=False, retain_all=True)
+        self.Edges = ox.graph_to_gdfs(self.Graph, nodes=False, edges=True)
+        return self.findRoute(waypoints)
+    #.end
 
 
 def worker(graph, waypoints, queue):
     try:
         path = graph.findRoute(waypoints)
+        # path = graph.FindRoute(waypoints)
         queue.put(path)
     except Exception as e:
         queue.put({"error": "{0}".format(e)})

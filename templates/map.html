@@ -140,13 +140,22 @@
 					type: "POST",
 					url: '/api/v1/route',
 					data: JSON.stringify(locations),
-					// success: success,
-					dataType: 'applicateion/json'
+					success: function(data) {
+						console.log(data);
+					},
+					dataType: 'json',
+					contentType: 'application/json; charset=utf-8'
 				})
 				.done(function(geojson) {
-				   	self.path.addData(geojson);
+					try {
+				   		self.path.addData(geojson);
+					}
+					catch(err) {
+						swal("Error", err, "error");
+					}
 				})
 				.fail(function(xhr) {
+					console.log(xhr);
 					swal("Error", xhr.responseText, "error");
 				});
 			}
