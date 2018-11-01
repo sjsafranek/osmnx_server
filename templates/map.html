@@ -136,13 +136,19 @@
 			this.path.clearLayers();
 			var locations = this.getLocations();
 			if (2 <= locations.length) {
-				$.post('/api/v1/route', JSON.stringify(locations))
-					.done(function(geojson) {
-					   	self.path.addData(geojson);
-					})
-					.fail(function(xhr) {
-						console.log(xhr);
-					});
+				$.ajax({
+					type: "POST",
+					url: '/api/v1/route',
+					data: JSON.stringify(locations),
+					// success: success,
+					dataType: 'applicateion/json'
+				})
+				.done(function(geojson) {
+				   	self.path.addData(geojson);
+				})
+				.fail(function(xhr) {
+					swal("Error", xhr.responseText, "error");
+				});
 			}
 		}
 

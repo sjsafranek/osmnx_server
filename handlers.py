@@ -50,11 +50,12 @@ class ApiBaseHandler(tornado.web.RequestHandler):
                 kwargs['message'] = 'Invalid HTTP method.'
             else:
                 kwargs['message'] = 'Unknown error.'
-
         self.write_json(kwargs)
 
     def write_json(self, response):
         self.set_header('Content-Type', 'application/json')
+        if "error" in response:
+            self.set_status(400)
         output = json.dumps(response)
         output = output.replace('NaN', 'null')
         self.write(output)

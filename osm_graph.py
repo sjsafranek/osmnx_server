@@ -107,9 +107,13 @@ class OSMGraph(object):
         edges.to_csv('{0}.edges'.format(self.place), index=False)
 
 
+
 def worker(graph, waypoints, queue):
-    path = graph.findRoute(waypoints)
-    queue.put(path)
+    try:
+        path = graph.findRoute(waypoints)
+        queue.put(path)
+    except Exception as e:
+        queue.put({"error": "{0}".format(e)})
 
 
 def findRoute(graph, waypoints):
