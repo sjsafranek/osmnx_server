@@ -12,6 +12,8 @@ import tornado.escape
 
 from logger import Logger
 
+from osm_graph import findRoute
+
 
 class MapHandler(tornado.web.RequestHandler):
     def get(self):
@@ -54,6 +56,7 @@ class ApiBaseHandler(tornado.web.RequestHandler):
     def write_json(self, response):
         self.set_header('Content-Type', 'application/json')
         output = json.dumps(response)
+        output = output.replace('NaN', 'null')
         self.write(output)
         self.finish()
 
@@ -62,7 +65,8 @@ class ApiRouteHandler(ApiBaseHandler):
 
     @run_on_executor
     def findRoute(self, waypoints=[]):
-        return self._graph.findRoute(waypoints)
+        # return self._graph.findRoute(waypoints)
+        return findRoute(self._graph, waypoints)
 
     @tornado.web.asynchronous # this will be async
     @tornado.gen.coroutine # we will be using coroutines, with gen.Task
