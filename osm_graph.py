@@ -64,10 +64,14 @@ class OSMGraph(object):
         collection = []
         for feature in features:
             geojson = json.loads(feature.geometry.to_json())['features'][0]
-            geojson['properties']['osmid']    = ';'.join([ str(x) for x in feature.osmid.tolist() ])
-            geojson['properties']['length']   = feature.length.item()
-            geojson['properties']['maxspeed'] = feature.maxspeed.item()
-            geojson['properties']['name']     = feature.name.item()
+            # geojson['properties']['osmid']    = ';'.join([ str(x) for x in feature.osmid.tolist() ])
+            # geojson['properties']['length']   = feature.length.item()
+            # geojson['properties']['maxspeed'] = feature.maxspeed.item()
+            # geojson['properties']['name']     = feature.name.item()
+            # copy columns
+            for column_id in list(feature.columns):
+                geojson['properties'][column_id] = feature[column_id].item()
+            del geojson['properties']['geometry']
 
             for prop in geojson['properties']:
                 try:
