@@ -36,16 +36,29 @@ except ImportError:
 # parse command line
 define('port', default=5555, help="Run on the given port", type=int)
 define('place', default='', help="Place to build path finding graph", type=str)
+define('north', default=0, help="North latitude", type=float)
+define('south', default=0, help="South latitude", type=float)
+define('east', default=0, help="East longitude", type=float)
+define('west', default=0, help="West longitude", type=float)
+
 options.parse_command_line()
-if "" == options.place:
-    raise ValueError("Place cannot be undefined")
+# if "" == options.place:
+#     raise ValueError("Place cannot be undefined")
 
 
 if __name__ == '__main__':
     from logger import Logger
     import application
 
-    app = application.MakeApp(options.place)
+    if '' != options.place:
+        app = application.MakeApp(options.place)
+    else:
+        app = application.MakeApp({
+            'north': options.north,
+            'south': options.south,
+            'east': options.east,
+            'west': options.west
+        })
     app.listen(options.port)
     Logger.info("Magic happens on port: {0}".format(options.port))
     try:

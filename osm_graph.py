@@ -19,6 +19,9 @@ class OSMGraph(object):
     def __init__(self, place):
         self.place = place
 
+        if str != type(place):
+            place = json.dumps(place)
+
         _ghsh = utils.calculateMD5ForString(place)
 
         graph_file = os.path.join('cache', '{0}.graph.p'.format(_ghsh))
@@ -33,11 +36,31 @@ class OSMGraph(object):
 
         else:
             Logger.debug("Building graph from osm data")
-            try:
-                self.Graph = ox.graph_from_place(self.place, network_type='drive', simplify=False, retain_all=True)
-            except:
-                self.Graph = ox.graph_from_place(self.place, network_type='drive', simplify=False, retain_all=True, which_result=2)
+
+            if str == type(self.place):
+                try:
+                    self.Graph = ox.graph_from_place(self.place, network_type='drive', simplify=False, retain_all=True)
+                except:
+                    self.Graph = ox.graph_from_place(self.place, network_type='drive', simplify=False, retain_all=True, which_result=2)
+            else:
+                # try:
+                self.Graph = ox.graph_from_bbox(
+                                self.place['north'],
+                                self.place['south'],
+                                self.place['east'],
+                                self.place['west'],
+                                network_type='drive', simplify=False, retain_all=True)
+                # except:
+                #     self.Graph = ox.graph_from_bbox(
+                #                     self.place['north'],
+                #                     self.place['south'],
+                #                     self.place['east'],
+                #                     self.place['west'],
+                #                     network_type='drive', simplify=False, retain_all=True, which_result=2)
+
             self.Edges = ox.graph_to_gdfs(self.Graph, nodes=False, edges=True)
+
+
             # self.Nodes = ox.graph_to_gdfs(self.Graph, nodes=True, edges=false)
 
             Logger.debug("Saving graph to cached file")
